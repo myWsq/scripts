@@ -27,6 +27,11 @@ warn()  { printf '   %s %s%s\n' "${YELLOW}!${RESET}" "${YELLOW}$*" "${RESET}"; }
 error() { printf '%s %s\n' "${RED}✗ 错误:${RESET}" "$*" >&2; }
 kv()    { printf '   %s %-36s %s %s\n' "${GREEN}•${RESET}" "$1" "${DIM}→${RESET}" "$2"; }
 tilde() { printf '%s' "~${1#$HOME}"; }
+# 仅保留末 4 位，其余用 * 遮掩（过短则原样返回避免暴露反而无意义的全部内容）
+mask_tail() {
+  local s="$1"
+  if [ "${#s}" -le 4 ]; then printf '%s' "$s"; else printf '****%s' "${s: -4}"; fi
+}
 
 # --- 横幅 ---
 printf '\n%s\n%s\n' "${CYAN}${BOLD}  ⚡ Claude Code 配置向导${RESET}" "$RULE"
@@ -80,6 +85,7 @@ while [ -z "$api_key" ]; do
   printf '\n'
   [ -z "$api_key" ] && warn "API Key 不能为空，请重新输入。"
 done
+ok "已读取 API Key（$(mask_tail "$api_key")）"
 
 # --- 3. 写入 settings.json ---
 step "3/3" "写入配置文件"
@@ -108,7 +114,7 @@ ok "已保存 5 个环境变量"
 printf '\n%s\n%s\n' "${GREEN}${BOLD}  ✓ 全部完成${RESET}" "$RULE"
 kv "hasCompletedOnboarding"                "true"
 kv "ANTHROPIC_BASE_URL"                    "$base_url"
-kv "ANTHROPIC_AUTH_TOKEN"                  "${api_key:0:4}${DIM}****（已隐藏）${RESET}"
+kv "ANTHROPIC_AUTH_TOKEN"                  "$(mask_tail "$api_key")"
 kv "CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS"  "1"
 kv "ENABLE_PROMPT_CACHING_1H"              "1"
 kv "ENABLE_TOOL_SEARCH"                    "true"
